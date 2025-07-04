@@ -1,1 +1,2 @@
 joblib==1.4.2
+librosa==0.11.0
