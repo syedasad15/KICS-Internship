@@ -1,0 +1,104 @@
+digraph FullLieDetectionSystem {
+    rankdir=TB;
+    node [shape=box, style=filled, fontname="Helvetica"];
+
+    // ========== DATA PROCESSING ==========
+    Dataset [label="Raw Dataset (CSV)\ntext, deceptive, polarity", fillcolor=lightblue];
+    DataCleaning [label="Data Cleaning\nDrop NA, Remove Noise", fillcolor=lightblue];
+    LabelMapping [label="Label Mapping\ndeceptive → 1\ntruthful → 0", fillcolor=lightblue];
+    PolarityMapping [label="Polarity Mapping\npositive → 1\nnegative → 0", fillcolor=lightblue];
+    TrainTestSplit [label="Train-Test Split\n80/20", fillcolor=lightblue];
+
+    Dataset -> DataCleaning -> LabelMapping -> PolarityMapping -> TrainTestSplit;
+
+    // ========== BERT PREPROCESSING ==========
+    Tokenization [label="BERT Tokenizer\n(max_len=512)", fillcolor=khaki];
+    Encoding [label="Encoding as Input IDs\n+ Attention Masks", fillcolor=khaki];
+    TensorConversion [label="Convert to Torch Tensors", fillcolor=khaki];
+
+    TrainTestSplit -> Tokenization -> Encoding -> TensorConversion;
+
+    // ========== MODEL TRAINING ==========
+    Model [label="BERT Base Model\n+ Classification Head", fillcolor=lightsalmon];
+    Optimizer [label="AdamW Optimizer", fillcolor=lightsalmon];
+    Scheduler [label="LR Scheduler", fillcolor=lightsalmon];
+    TrainingLoop [label="Training Loop\nEpochs, Loss", fillcolor=lightsalmon];
+    Evaluation [label="Test Set Evaluation", fillcolor=lightsalmon];
+    SaveModel [label="Save Trained Model\ndeception-bert-model", fillcolor=lightsalmon];
+
+    TensorConversion -> Model;
+    Model -> Optimizer;
+    Model -> Scheduler;
+    Optimizer -> TrainingLoop;
+    Scheduler -> TrainingLoop;
+    TrainingLoop -> Evaluation -> SaveModel;
+
+    // ========== STREAMLIT APPLICATION ==========
+    StreamlitApp [label="Streamlit UI\n🕵️ Emojis, Page Config", fillcolor=lightgreen];
+    LoadModel [label="Load Trained Model\n+ Tokenizer\n(with error handling)", fillcolor=lightgreen];
+    TextInput [label="User Input\nTextArea", fillcolor=lightgreen];
+    AppTokenization [label="Tokenize User Input", fillcolor=lightgreen];
+    Predict [label="Run Prediction\n(torch.argmax)", fillcolor=lightgreen];
+    Confidence [label="Extract Confidence\n(Softmax %)", fillcolor=lightgreen];
+    DisplayResult [label="Display Result:\n✅ Truth / ❌ Lie", fillcolor=lightgreen];
+    Footer [label="Footer: OpenAI, LIME, Streamlit", fillcolor=lightgreen];
+
+    SaveModel -> LoadModel;
+    StreamlitApp -> LoadModel;
+    StreamlitApp -> TextInput -> AppTokenization -> Predict -> Confidence -> DisplayResult;
+    LoadModel -> Predict;
+    StreamlitApp -> Footer;
+
+    // ========== LIME EXPLAINABILITY ==========
+    LIME [label="LIME Text Explainer", fillcolor=lightyellow];
+    ExplainInstance [label="explain_instance()\nnum_samples=100", fillcolor=lightyellow];
+    InfluentialWords [label="Highlight Top Words\n(color-coded)", fillcolor=lightyellow];
+
+    Predict -> LIME -> ExplainInstance -> InfluentialWords;
+    StreamlitApp -> InfluentialWords;
+
+    // ========== EDA ==========
+    EDA1 [label="Label Distribution Plot", fillcolor=plum1];
+    EDA2 [label="Polarity Distribution Plot", fillcolor=plum1];
+
+    LabelMapping -> EDA1;
+    PolarityMapping -> EDA2;
+
+    // ========== GROUPS ==========
+    subgraph cluster_data {
+        label="📘 Data Processing";
+        style=dashed; color=blue;
+        Dataset; DataCleaning; LabelMapping; PolarityMapping; TrainTestSplit;
+    }
+
+    subgraph cluster_preprocess {
+        label="🟨 BERT Preprocessing";
+        style=dashed; color=goldenrod;
+        Tokenization; Encoding; TensorConversion;
+    }
+
+    subgraph cluster_model {
+        label="🟧 Model Training";
+        style=dashed; color=orangered;
+        Model; Optimizer; Scheduler; TrainingLoop; Evaluation; SaveModel;
+    }
+
+    subgraph cluster_app {
+        label="🟩 Streamlit App";
+        style=dashed; color=green;
+        StreamlitApp; LoadModel; TextInput; AppTokenization;
+        Predict; Confidence; DisplayResult; Footer;
+    }
+
+    subgraph cluster_lime {
+        label="🧠 LIME Explainability";
+        style=dashed; color=orange;
+        LIME; ExplainInstance; InfluentialWords;
+    }
+
+    subgraph cluster_eda {
+        label="📊 Exploratory Data Analysis";
+        style=dashed; color=purple;
+        EDA1; EDA2;
+    }
+}
